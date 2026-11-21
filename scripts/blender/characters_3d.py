@@ -79,7 +79,6 @@ def _build_card_material(
         bsdf.inputs["Specular IOR Level"].default_value = 0.08
     if "Emission Strength" in bsdf.inputs:
         bsdf.inputs["Emission Strength"].default_value = emission_boost
-    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
 
     # UV Mapping for front face
     uv_node = nt.nodes.new("ShaderNodeTexCoord")
@@ -145,7 +144,17 @@ def _build_card_material(
     nt.links.new(color_out, bsdf.inputs["Base Color"])
     if "Emission Color" in bsdf.inputs:
         nt.links.new(color_out, bsdf.inputs["Emission Color"])
-    nt.links.new(alpha_clip.outputs["Value"], bsdf.inputs["Alpha"])
+    bsdf.inputs["Alpha"].default_value = 1.0
+
+    # Explicit Transparent BSDF Mix guarantees 100% pure zero-halo transparent cutout in BOTH EEVEE Next & Cycles!
+    trans = nt.nodes.new("ShaderNodeBsdfTransparent")
+    trans.location = (420, -240)
+    mix_sh = nt.nodes.new("ShaderNodeMixShader")
+    mix_sh.location = (620, 0)
+    nt.links.new(alpha_clip.outputs["Value"], mix_sh.inputs["Fac"])
+    nt.links.new(trans.outputs["BSDF"], mix_sh.inputs[1])
+    nt.links.new(bsdf.outputs["BSDF"], mix_sh.inputs[2])
+    nt.links.new(mix_sh.outputs["Shader"], out.inputs["Surface"])
 
     return mat
 

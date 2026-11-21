@@ -24,7 +24,7 @@ def _assign_mat(obj: bpy.types.Object, mat: bpy.types.Material) -> None:
         obj.data.materials.append(mat)
 
 
-def _bevel(obj: bpy.types.Object, width: float = 0.005, segments: int = 2) -> None:
+def _bevel(obj: bpy.types.Object, width: float = 0.005, segments: int = 1) -> None:
     mod = obj.modifiers.new(name="Bevel", type="BEVEL")
     mod.width = width
     mod.segments = segments

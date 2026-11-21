@@ -241,13 +241,32 @@ def build_material_library() -> Dict[str, bpy.types.Material]:
     _set_input(bsdf, "Coat Weight", 0.4)
     mats["crimson_lacquer"] = mat
 
-    # 12. TRUE ART DECO MIRROR GLASS (Hero story prop!)
+    # 12. TRUE ART DECO MIRROR GLASS (Physical mirror + translucent portal glass tint for fast zero-raytrace CI!)
     mat, nt, bsdf = _new_mat("ArtDeco_MirrorGlass")
     _set_input(bsdf, "Base Color", (0.94, 0.97, 0.99, 1.0))
     _set_input(bsdf, "Metallic", 1.0)
     _set_input(bsdf, "Roughness", 0.012)
     _set_input(bsdf, "IOR", 1.52)
     mats["mirror_glass"] = mat
+
+    # Crisp subtle warm-white corner glass highlight streak (2.5D animated mirror sheen!)
+    mat, nt, bsdf = _new_mat("ArtDeco_MirrorSheen")
+    nt.nodes.clear()
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    mix.inputs["Fac"].default_value = 0.22
+    trans = nt.nodes.new("ShaderNodeBsdfTransparent")
+    emit = nt.nodes.new("ShaderNodeEmission")
+    emit.inputs["Color"].default_value = (1.0, 0.97, 0.88, 1.0)
+    emit.inputs["Strength"].default_value = 1.35
+    nt.links.new(trans.outputs["BSDF"], mix.inputs[1])
+    nt.links.new(emit.outputs["Emission"], mix.inputs[2])
+    nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+    if hasattr(mat, "surface_render_method"):
+        mat.surface_render_method = "BLENDED"
+    if hasattr(mat, "use_transparent_shadow"):
+        mat.use_transparent_shadow = True
+    mats["mirror_sheen"] = mat
 
     # 13. Stylized Lobby Palm Foliage
     mat, nt, bsdf = _new_mat("ArtDeco_Foliage")

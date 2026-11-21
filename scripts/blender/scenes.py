@@ -25,7 +25,7 @@ from .anim_utils import (
     key_rot,
 )
 from .characters_3d import clear_characters
-from .environment import set_collection_visibility
+from .environment import set_collection_visibility, set_mirror_portal_mode
 from .lighting import apply_lighting_mood
 
 
@@ -42,6 +42,7 @@ def build_scene(
     scene.frame_end = num_frames
 
     clear_characters()
+    set_mirror_portal_mode(env, False)
     cam = CinemaCameraRig(f"Cam_S{scene_id:02d}")
     f0, f1 = 1, num_frames
 
@@ -307,51 +308,64 @@ def build_scene(
     # =========================================================================
     elif scene_id == 8:
         set_collection_visibility(env["mirrors_col"], True)
+        set_mirror_portal_mode(env, True)  # Zero-raytracing optical mirror alcove (10x faster CI + razor sharp!)
         set_collection_visibility(env["rocket_col"], False)
         apply_lighting_mood("golden_mirror", mats, env["dust_col"])
 
         animate_dust_float(env["dust_col"], f0, f1)
         animate_clock_hyper_spin(env, f0, f1, turns=1.2)
 
-        # Smart Double-Sided Card: camera sees Pak Doni's back 3/4, real 3D Mirror reflects
-        # his live comedic expression swap from STUNNED (O_o) -> NARCISSISTIC smolder + 3D Gold Comb!
+        # Real Pak Doni standing in front of mirror (camera sees his back 3/4 + 3D Gold Comb & Briefcase)
         doni = AnimatedCharacter25D(
             "Doni_S08", manifest, "doni", (0.14, 3.25, 0.0), 12.0,
-            [
-                {"key": "stunned_refl", "angle": "back_three_quarter", "back_expression": "stunned"},
-                {"key": "narc_refl", "angle": "back_three_quarter", "back_expression": "narcissistic"},
-            ],
+            [{"key": "back3q", "angle": "back_three_quarter"}],
             mats,
             flip_x=True,
             emission_boost=0.14,
         )
-        doni.show_variant("stunned_refl", f0)
-        doni.show_variant("narc_refl", _f(0.38))
         doni.animate_idle_talk(f0, f1, period_frames=20, squash=0.04, sway_deg=2.2)
 
-        # Animate his real 3D Gold Art Deco Comb brushing rhythmically right inside his hand grip!
-        if "comb" in doni.props:
-            comb = doni.props["comb"]
-            cx0, cy0, cz0 = comb.location.x, comb.location.y, comb.location.z
-            key_loc(comb, (cx0, cy0, cz0), f0)
-            key_loc(comb, (cx0 + 0.02, cy0, cz0 + 0.05), _f(0.45))
-            key_loc(comb, (cx0 + 0.04, cy0, cz0 + 0.02), _f(0.62))
-            key_loc(comb, (cx0 + 0.01, cy0, cz0 + 0.05), _f(0.80))
-            key_loc(comb, (cx0, cy0, cz0), f1)
-            key_rot(comb, (0.0, 0.0, -18.0), f0)
-            key_rot(comb, (0.0, -22.0, -8.0), _f(0.55))
-            key_rot(comb, (0.0, 12.0, -22.0), _f(0.78))
-            key_rot(comb, (0.0, -14.0, -12.0), f1)
+        # Optical Mirrored Twin inside the Art Deco Mirror Alcove at y_refl = 2 * 4.405 - 3.25 = 5.56m!
+        # Displays live STUNNED (O_o) -> NARCISSISTIC smolder + synchronized 3D Gold Comb!
+        mirror_y = float(env["mirror_plane_y"])
+        doni_refl = AnimatedCharacter25D(
+            "Doni_S08_MirrorRefl", manifest, "doni", (0.14, 2.0 * mirror_y - 3.25, 0.0), -12.0,
+            [
+                {"key": "stunned", "expression": "stunned"},
+                {"key": "narcissistic", "expression": "narcissistic"},
+            ],
+            mats,
+            flip_x=False,
+            emission_boost=0.18,
+        )
+        doni_refl.show_variant("stunned", f0)
+        doni_refl.show_variant("narcissistic", _f(0.38))
+        doni_refl.animate_idle_talk(f0, f1, period_frames=20, squash=0.04, sway_deg=-2.2)
+
+        # Animate BOTH real & mirrored 3D Gold Art Deco Comb brushing rhythmically in perfect sync!
+        for rig, sgn in ((doni, 1.0), (doni_refl, -1.0)):
+            if "comb" in rig.props:
+                comb = rig.props["comb"]
+                cx0, cy0, cz0 = comb.location.x, comb.location.y, comb.location.z
+                key_loc(comb, (cx0, cy0, cz0), f0)
+                key_loc(comb, (cx0 + 0.02 * sgn, cy0, cz0 + 0.05), _f(0.45))
+                key_loc(comb, (cx0 + 0.04 * sgn, cy0, cz0 + 0.02), _f(0.62))
+                key_loc(comb, (cx0 + 0.01 * sgn, cy0, cz0 + 0.05), _f(0.80))
+                key_loc(comb, (cx0, cy0, cz0), f1)
+                key_rot(comb, (0.0, 0.0, -18.0 * sgn), f0)
+                key_rot(comb, (0.0, -22.0 * sgn, -8.0 * sgn), _f(0.55))
+                key_rot(comb, (0.0, 12.0 * sgn, -22.0 * sgn), _f(0.78))
+                key_rot(comb, (0.0, -14.0 * sgn, -12.0 * sgn), f1)
 
         bima = AnimatedCharacter25D(
             "Bima_S08", manifest, "bima", (-1.22, 2.72, 0.0), 16.0,
-            [{"key": "relieved", "expression": "relieved", "back_angle": "back"}], mats,
+            [{"key": "relieved", "expression": "relieved"}], mats,
         )
         bima.animate_idle_talk(f0, f1, period_frames=22, squash=0.03)
 
         raka = AnimatedCharacter25D(
             "Raka_S08", manifest, "raka", (1.28, 2.82, 0.0), -22.0,
-            [{"key": "smug", "expression": "smug", "back_angle": "back"}], mats,
+            [{"key": "smug", "expression": "smug"}], mats,
         )
         raka.animate_idle_talk(f0, f1, period_frames=24, squash=0.025)
 
@@ -365,6 +379,7 @@ def build_scene(
     # =========================================================================
     elif scene_id == 9:
         set_collection_visibility(env["mirrors_col"], True)
+        set_mirror_portal_mode(env, True)
         set_collection_visibility(env["rocket_col"], False)
         apply_lighting_mood("golden_mirror", mats, env["dust_col"])
 
@@ -375,21 +390,29 @@ def build_scene(
 
         doni = AnimatedCharacter25D(
             "Doni_S09", manifest, "doni", (-1.55, 3.25, 0.0), 8.0,
-            [{"key": "happy", "expression": "happy", "back_angle": "back"}], mats,
+            [{"key": "happy", "expression": "happy"}], mats,
         )
         doni.animate_idle_talk(f0, f1, period_frames=14, squash=0.05, sway_deg=3.0)
 
         bima = AnimatedCharacter25D(
             "Bima_S09", manifest, "bima", (0.25, 2.55, 0.0), -6.0,
             [
-                {"key": "relieved", "expression": "relieved", "back_angle": "back"},
-                {"key": "proud", "expression": "proud", "back_angle": "back"},
+                {"key": "relieved", "expression": "relieved"},
+                {"key": "proud", "expression": "proud"},
             ],
             mats,
         )
         bima.show_variant("relieved", f0)
         bima.show_variant("proud", _f(0.56))
         bima.animate_hop_move((0.25, 2.55, 0.0), (0.25, 2.35, 0.0), _f(0.56), _f(0.92), hops=3, hop_h=0.18)
+
+        # Authentic 180° back reflection of Pak Bima inside the Mirror Portal!
+        mirror_y = float(env["mirror_plane_y"])
+        bima_refl = AnimatedCharacter25D(
+            "Bima_S09_MirrorRefl", manifest, "bima", (0.25, 2.0 * mirror_y - 2.55, 0.0), 6.0,
+            [{"key": "back", "angle": "back"}], mats, flip_x=True,
+        )
+        bima_refl.animate_hop_move((0.25, 2.0 * mirror_y - 2.55, 0.0), (0.25, 2.0 * mirror_y - 2.35, 0.0), _f(0.56), _f(0.92), hops=3, hop_h=0.18)
 
         # Whip-tilt UP to Hyper-Spinning Giant Wall Clock -> drop down to Elevator Doors gliding OPEN!
         cam.key_shot(f0, (0.0, -1.25, 2.35), (0.0, 4.45, 4.40), lens_mm=34.0)
@@ -402,19 +425,19 @@ def build_scene(
     # =========================================================================
     else:
         set_collection_visibility(env["mirrors_col"], True)
+        set_mirror_portal_mode(env, True)
         set_collection_visibility(env["rocket_col"], True)
         apply_lighting_mood("golden_mirror", mats, env["dust_col"])
 
         animate_dust_float(env["dust_col"], f0, f1)
         animate_clock_hyper_spin(env, f0, f1, turns=1.5)
-        # Final comedic micro-gag: Clara sheepishly drags her rejected 3D Turbo-Rocket Cart offscreen!
         animate_collection_slide_x(env["rocket_col"], offset_start_x=-0.20, offset_end_x=2.25, f0=_f(0.18), f1=f1)
 
         raka = AnimatedCharacter25D(
             "Raka_S10", manifest, "raka", (-0.15, 0.75, 0.0), 4.0,
             [
-                {"key": "smug", "expression": "smug", "back_angle": "back"},
-                {"key": "laugh", "expression": "laugh", "back_angle": "back"},
+                {"key": "smug", "expression": "smug"},
+                {"key": "laugh", "expression": "laugh"},
             ],
             mats,
         )
@@ -425,14 +448,21 @@ def build_scene(
         # Pak Doni STILL blissfully grooming himself in the Grand Mirror in the background!
         doni = AnimatedCharacter25D(
             "Doni_S10", manifest, "doni", (0.12, 3.30, 0.0), 10.0,
-            [{"key": "narc", "angle": "back_three_quarter", "back_expression": "narcissistic"}],
+            [{"key": "narc", "angle": "back_three_quarter"}],
             mats, flip_x=True, emission_boost=0.14,
         )
         doni.animate_idle_talk(f0, f1, period_frames=20, squash=0.03)
+        mirror_y = float(env["mirror_plane_y"])
+        doni_refl = AnimatedCharacter25D(
+            "Doni_S10_MirrorRefl", manifest, "doni", (0.12, 2.0 * mirror_y - 3.30, 0.0), -10.0,
+            [{"key": "narc", "expression": "narcissistic"}],
+            mats, flip_x=False, emission_boost=0.18,
+        )
+        doni_refl.animate_idle_talk(f0, f1, period_frames=20, squash=0.03, sway_deg=-2.0)
 
         bima = AnimatedCharacter25D(
             "Bima_S10", manifest, "bima", (-1.45, 2.65, 0.0), 14.0,
-            [{"key": "proud", "expression": "proud", "back_angle": "back"}], mats,
+            [{"key": "proud", "expression": "proud"}], mats,
         )
         bima.animate_idle_talk(f0, f1, period_frames=18, squash=0.04)
 

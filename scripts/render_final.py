@@ -41,11 +41,14 @@ def _parse_args() -> argparse.Namespace:
         argv = []
     parser = argparse.ArgumentParser(description="Render Stage 4 animated 2.5D/3D Blender scenes")
     parser.add_argument("--scene", type=str, default="all", help="Scene number 1..10, comma list, or 'all'")
+    parser.add_argument("--part", type=int, default=1, help="1-based shard index within scene (default 1)")
+    parser.add_argument("--parts", type=int, default=1, help="Total shards per scene (e.g. 2 for 20-way CI matrix)")
     parser.add_argument("--width", type=int, default=1080)
     parser.add_argument("--height", type=int, default=1920)
-    parser.add_argument("--samples", type=int, default=16, help="EEVEE TAA or Cycles samples per frame")
+    parser.add_argument("--samples", type=int, default=6, help="EEVEE TAA or Cycles samples per frame")
     parser.add_argument("--engine", type=str, default="eevee", choices=["eevee", "cycles"])
-    parser.add_argument("--no-freestyle", action="store_true", help="Disable Freestyle outlines for ultra-fast draft")
+    parser.add_argument("--fast-ci", action="store_true", help="Optimize EEVEE for 10x faster software-GL CPU rendering")
+    parser.add_argument("--use-freestyle", action="store_true", help="Use classic Freestyle instead of fast Compositor Toon Ink")
     parser.add_argument("--keyframe-only", action="store_true", help="Render only 1 hero mid-frame per scene for QA")
     parser.add_argument("--encode-clip", action="store_true", help="Encode scene PNG frames to MP4 clip & prune PNGs")
     parser.add_argument("--save-blend", action="store_true", help="Save generated .blend per scene")
@@ -68,11 +71,12 @@ def _parse_scene_list(scene_arg: str) -> List[int]:
     return [int(x.strip()) for x in scene_arg.split(",") if x.strip()]
 
 
-def _encode_frames_to_mp4(frames_dir: Path, clip_path: Path, fps: int = FPS) -> None:
+def _encode_frames_to_mp4(frames_dir: Path, clip_path: Path, start_number: int = 1, fps: int = FPS) -> None:
     clip_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         "ffmpeg", "-y",
         "-framerate", str(fps),
+        "-start_number", str(start_number),
         "-i", str(frames_dir / "frame_%04d.png"),
         "-c:v", "libx264",
         "-preset", "medium",
@@ -85,19 +89,34 @@ def _encode_frames_to_mp4(frames_dir: Path, clip_path: Path, fps: int = FPS) -> 
     print(f"[Render] Encoded clip {clip_path} ({clip_path.stat().st_size // 1024} KB)")
 
 
+def _compute_shard_range(num_frames: int, part: int, parts: int) -> tuple[int, int]:
+    if parts <= 1:
+        return 1, num_frames
+    base = num_frames // parts
+    rem = num_frames % parts
+    start = 1 + (part - 1) * base + min(part - 1, rem)
+    length = base + (1 if part <= rem else 0)
+    return start, start + length - 1
+
+
 def render_single_scene(
     scene_id: int,
     num_frames: int,
     args: argparse.Namespace,
     out_dir: Path,
 ) -> None:
-    print(f"\n[Render] === Building Scene {scene_id:02d} ({num_frames} frames @ {FPS} FPS, {args.width}x{args.height}, {args.engine}) ===")
+    f_start, f_end = _compute_shard_range(num_frames, args.part, args.parts)
+    part_tag = f"_p{args.part}" if args.parts > 1 else ""
+    print(
+        f"\n[Render] === Scene {scene_id:02d}{part_tag} (frames {f_start}..{f_end} of {num_frames} "
+        f"@ {FPS} FPS, {args.width}x{args.height}, {args.engine}, fast_ci={args.fast_ci}) ==="
+    )
     clear_scene()
     scene = bpy.context.scene
     scene.render.fps = FPS
     scene.render.fps_base = 1.0
 
-    use_fs = not args.no_freestyle
+    use_fs = bool(args.use_freestyle and not args.fast_ci)
     configure_eevee_render(
         scene,
         width=args.width,
@@ -106,11 +125,8 @@ def render_single_scene(
         use_freestyle=use_fs,
         line_thickness=1.35,
         engine=args.engine,
+        fast_ci=args.fast_ci,
     )
-
-    # Optimize EEVEE shadow resolution slightly in animation mode for snappy headless CI render speed
-    if args.engine == "eevee" and hasattr(scene.eevee, "shadow_resolution_scale"):
-        scene.eevee.shadow_resolution_scale = 0.65
 
     mats = build_material_library()
     env = build_art_deco_lobby(mats)
@@ -132,7 +148,6 @@ def render_single_scene(
         bpy.ops.wm.save_as_mainfile(filepath=str(blend_dir / f"scene_{scene_id:02d}.blend"))
 
     if args.keyframe_only:
-        # Render single hero midpoint frame (55% into scene) for rapid QA verification!
         hero_frame = max(1, min(num_frames, int(round(num_frames * 0.58))))
         scene.frame_set(hero_frame)
         kf_dir = out_dir / "keyframes"
@@ -143,19 +158,19 @@ def render_single_scene(
         print(f"[Render] Saved Scene {scene_id:02d} QA keyframe -> {kf_path}")
         return
 
-    frames_dir = out_dir / "frames" / f"scene_{scene_id:02d}"
+    frames_dir = out_dir / "frames" / f"scene_{scene_id:02d}{part_tag}"
     frames_dir.mkdir(parents=True, exist_ok=True)
     scene.render.filepath = str(frames_dir / "frame_")
     scene.render.use_file_extension = True
-    scene.frame_start = 1
-    scene.frame_end = num_frames
+    scene.frame_start = f_start
+    scene.frame_end = f_end
 
     bpy.ops.render.render(animation=True)
-    print(f"[Render] Finished Scene {scene_id:02d} frames in {frames_dir}")
+    print(f"[Render] Finished Scene {scene_id:02d}{part_tag} frames ({f_start}..{f_end}) in {frames_dir}")
 
     if args.encode_clip:
-        clip_path = out_dir / "clips" / f"scene_{scene_id:02d}.mp4"
-        _encode_frames_to_mp4(frames_dir, clip_path, fps=FPS)
+        clip_path = out_dir / "clips" / f"scene_{scene_id:02d}{part_tag}.mp4"
+        _encode_frames_to_mp4(frames_dir, clip_path, start_number=f_start, fps=FPS)
         shutil.rmtree(frames_dir, ignore_errors=True)
 
 

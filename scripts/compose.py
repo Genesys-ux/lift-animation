@@ -30,12 +30,21 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _ensure_scene_clips(out_dir: Path, scene_ids: List[int]) -> List[Path]:
-    """Locate scene_XX.mp4 clips (encoding from PNG frame folders if needed)."""
+    """Locate either sharded scene_XX_p1/p2.mp4 clips or whole scene_XX.mp4 clips in exact order."""
     clips_dir = out_dir / "clips"
     clips_dir.mkdir(parents=True, exist_ok=True)
     clips: List[Path] = []
 
     for sid in scene_ids:
+        # First check for multi-part sharded clips (scene_XX_p1.mp4, scene_XX_p2.mp4, ...)
+        sharded = sorted(
+            out_dir.rglob(f"scene_{sid:02d}_p*.mp4"),
+            key=lambda p: int(p.stem.rsplit("_p", 1)[1]) if "_p" in p.stem else 0,
+        )
+        if sharded:
+            clips.extend(sharded)
+            continue
+
         clip_path = clips_dir / f"scene_{sid:02d}.mp4"
         if not clip_path.exists():
             nested = sorted(out_dir.rglob(f"scene_{sid:02d}.mp4"))
@@ -57,7 +66,7 @@ def _ensure_scene_clips(out_dir: Path, scene_ids: List[int]) -> List[Path]:
                 )
             else:
                 raise FileNotFoundError(
-                    f"Missing rendered clip {clip_path} and frame folder {frames_dir}. "
+                    f"Missing rendered clip(s) for Scene {sid:02d} in {clips_dir}. "
                     f"Render scenes via scripts/render_final.py first."
                 )
         clips.append(clip_path)

@@ -31,6 +31,7 @@ def _add_area_light(
     size_y: float,
     col: bpy.types.Collection,
     spread_deg: float = 82.0,
+    cast_shadow: bool = True,
 ) -> bpy.types.Object:
     ldata = bpy.data.lights.new(name=name + "_Data", type="AREA")
     ldata.energy = energy
@@ -40,6 +41,8 @@ def _add_area_light(
     ldata.size_y = size_y
     if hasattr(ldata, "spread"):
         ldata.spread = math.radians(spread_deg)
+    if hasattr(ldata, "use_shadow"):
+        ldata.use_shadow = cast_shadow
     lobj = bpy.data.objects.new(name, ldata)
     lobj.location = loc
     lobj.rotation_euler = Euler(tuple(math.radians(a) for a in rot_deg), "XYZ")
@@ -59,11 +62,14 @@ def _add_point_light(
     color: tuple[float, float, float],
     radius: float,
     col: bpy.types.Collection,
+    cast_shadow: bool = False,
 ) -> bpy.types.Object:
     ldata = bpy.data.lights.new(name=name + "_Data", type="POINT")
     ldata.energy = energy
     ldata.color = color
     ldata.shadow_soft_size = radius
+    if hasattr(ldata, "use_shadow"):
+        ldata.use_shadow = cast_shadow
     lobj = bpy.data.objects.new(name, ldata)
     lobj.location = loc
     link_obj_exclusive(lobj, col)
@@ -117,21 +123,21 @@ def apply_lighting_mood(
         scene.view_settings.exposure = -0.22
 
         # Directional warm morning window key shafts (casts bold grounded shadows across marble floor!)
-        _add_area_light("Key_MorningWindow1", (-4.3, 0.7, 3.6), (52, 0, -68), 380.0, (1.0, 0.88, 0.68), 1.4, 2.8, light_col, 62.0)
-        _add_area_light("Key_MorningWindow2", (-4.3, -1.9, 3.6), (54, 0, -62), 260.0, (1.0, 0.90, 0.74), 1.4, 2.6, light_col, 68.0)
+        _add_area_light("Key_MorningWindow1", (-4.3, 0.7, 3.6), (52, 0, -68), 380.0, (1.0, 0.88, 0.68), 1.4, 2.8, light_col, 62.0, cast_shadow=True)
+        _add_area_light("Key_MorningWindow2", (-4.3, -1.9, 3.6), (54, 0, -62), 260.0, (1.0, 0.90, 0.74), 1.4, 2.6, light_col, 68.0, cast_shadow=False)
 
-        # Grand Chandelier warm ceiling pool
-        _add_point_light("Practical_Chandelier", (0.0, 0.75, 4.10), 175.0, (1.0, 0.84, 0.56), 0.45, light_col)
+        # Grand Chandelier warm ceiling pool (no shadow map needed -> 6x faster CI!)
+        _add_point_light("Practical_Chandelier", (0.0, 0.75, 4.10), 175.0, (1.0, 0.84, 0.56), 0.45, light_col, cast_shadow=False)
 
         # Soft cool sky bounce fill from lobby entrance for clean depth separation
-        _add_area_light("Fill_CoolEntrance", (0.6, -4.6, 2.9), (78, 0, 8), 95.0, (0.62, 0.80, 1.0), 3.8, 2.4, light_col, 110.0)
+        _add_area_light("Fill_CoolEntrance", (0.6, -4.6, 2.9), (78, 0, 8), 95.0, (0.62, 0.80, 1.0), 3.8, 2.4, light_col, 110.0, cast_shadow=False)
 
         # Architectural wash grazing Hero Clock & Brass Elevator Doors
-        _add_area_light("Accent_ClockWash", (0.0, 2.1, 5.1), (42, 0, 0), 105.0, (1.0, 0.90, 0.72), 3.2, 1.0, light_col, 78.0)
+        _add_area_light("Accent_ClockWash", (0.0, 2.1, 5.1), (42, 0, 0), 105.0, (1.0, 0.90, 0.72), 3.2, 1.0, light_col, 78.0, cast_shadow=False)
 
         # Warm practical sconce pools flanking elevators
-        _add_point_light("SconceGlow_L", (-3.05, 4.05, 2.65), 38.0, (1.0, 0.78, 0.42), 0.22, light_col)
-        _add_point_light("SconceGlow_R", (3.05, 4.05, 2.65), 38.0, (1.0, 0.78, 0.42), 0.22, light_col)
+        _add_point_light("SconceGlow_L", (-3.05, 4.05, 2.65), 38.0, (1.0, 0.78, 0.42), 0.22, light_col, cast_shadow=False)
+        _add_point_light("SconceGlow_R", (3.05, 4.05, 2.65), 38.0, (1.0, 0.78, 0.42), 0.22, light_col, cast_shadow=False)
 
         _set_material_emission(mats["sconce_glass"], (1.0, 0.84, 0.48, 1.0), 3.6)
         _set_material_emission(mats["window_sky"], (0.86, 0.94, 1.0, 1.0), 2.4)
@@ -145,15 +151,15 @@ def apply_lighting_mood(
         scene.view_settings.exposure = -0.25
 
         # Intense dramatic overhead spotlighting on waiting zone
-        _add_area_light("Key_StressOverhead", (-0.4, 2.0, 5.1), (18, 0, -10), 310.0, (1.0, 0.66, 0.36), 2.0, 2.0, light_col, 55.0)
+        _add_area_light("Key_StressOverhead", (-0.4, 2.0, 5.1), (18, 0, -10), 310.0, (1.0, 0.66, 0.36), 2.0, 2.0, light_col, 55.0, cast_shadow=True)
         # Hot orange-amber slash from left window
-        _add_area_light("Key_StressWindow", (-4.3, 1.2, 3.2), (56, 0, -76), 270.0, (1.0, 0.44, 0.18), 1.4, 2.6, light_col, 58.0)
+        _add_area_light("Key_StressWindow", (-4.3, 1.2, 3.2), (56, 0, -76), 270.0, (1.0, 0.44, 0.18), 1.4, 2.6, light_col, 58.0, cast_shadow=False)
         # Dramatic crimson stress rim glowing near elevator call panel & floor dial!
-        _add_point_light("Rim_StressElevatorL", (-1.15, 3.85, 2.05), 85.0, (1.0, 0.16, 0.08), 0.28, light_col)
-        _add_point_light("Rim_StressElevatorR", (1.65, 3.85, 2.25), 55.0, (1.0, 0.32, 0.14), 0.28, light_col)
+        _add_point_light("Rim_StressElevatorL", (-1.15, 3.85, 2.05), 85.0, (1.0, 0.16, 0.08), 0.28, light_col, cast_shadow=False)
+        _add_point_light("Rim_StressElevatorR", (1.65, 3.85, 2.25), 55.0, (1.0, 0.32, 0.14), 0.28, light_col, cast_shadow=False)
         # Cool indigo counter-fill for rich teal-vs-crimson contrast
-        _add_area_light("Fill_StressIndigo", (2.4, -2.5, 2.4), (72, 0, 32), 85.0, (0.30, 0.46, 0.98), 3.2, 2.2, light_col, 105.0)
-        _add_point_light("Practical_Chandelier", (0.0, 0.75, 4.10), 95.0, (1.0, 0.56, 0.24), 0.45, light_col)
+        _add_area_light("Fill_StressIndigo", (2.4, -2.5, 2.4), (72, 0, 32), 85.0, (0.30, 0.46, 0.98), 3.2, 2.2, light_col, 105.0, cast_shadow=False)
+        _add_point_light("Practical_Chandelier", (0.0, 0.75, 4.10), 95.0, (1.0, 0.56, 0.24), 0.45, light_col, cast_shadow=False)
 
         _set_material_emission(mats["sconce_glass"], (1.0, 0.44, 0.14, 1.0), 4.6)
         _set_material_emission(mats["window_sky"], (1.0, 0.56, 0.26, 1.0), 2.2)
@@ -166,19 +172,19 @@ def apply_lighting_mood(
         scene.view_settings.exposure = -0.15
 
         # Rich low-angle golden sunset shaft slashing dramatically across the lobby!
-        _add_area_light("Key_SunsetWindow1", (-4.3, 0.9, 2.9), (66, 0, -68), 480.0, (1.0, 0.54, 0.18), 1.5, 2.8, light_col, 52.0)
-        _add_area_light("Key_SunsetWindow2", (-4.3, -1.8, 2.7), (68, 0, -62), 260.0, (1.0, 0.48, 0.16), 1.4, 2.6, light_col, 60.0)
+        _add_area_light("Key_SunsetWindow1", (-4.3, 0.9, 2.9), (66, 0, -68), 480.0, (1.0, 0.54, 0.18), 1.5, 2.8, light_col, 52.0, cast_shadow=True)
+        _add_area_light("Key_SunsetWindow2", (-4.3, -1.8, 2.7), (68, 0, -62), 260.0, (1.0, 0.48, 0.16), 1.4, 2.6, light_col, 60.0, cast_shadow=False)
 
-        # Warm glowing Art Deco chandelier & practical wall sconces (reflected magically in mirror!)
-        _add_point_light("Practical_Chandelier", (0.0, 0.75, 4.10), 220.0, (1.0, 0.74, 0.36), 0.50, light_col)
-        _add_point_light("SconceGlow_BackL", (-3.05, 4.05, 2.65), 65.0, (1.0, 0.70, 0.28), 0.24, light_col)
-        _add_point_light("SconceGlow_BackR", (3.05, 4.05, 2.65), 65.0, (1.0, 0.70, 0.28), 0.24, light_col)
+        # Warm glowing Art Deco chandelier & practical wall sconces (no cubemap shadow overhead -> 6x faster CI!)
+        _add_point_light("Practical_Chandelier", (0.0, 0.75, 4.10), 220.0, (1.0, 0.74, 0.36), 0.50, light_col, cast_shadow=False)
+        _add_point_light("SconceGlow_BackL", (-3.05, 4.05, 2.65), 65.0, (1.0, 0.70, 0.28), 0.24, light_col, cast_shadow=False)
+        _add_point_light("SconceGlow_BackR", (3.05, 4.05, 2.65), 65.0, (1.0, 0.70, 0.28), 0.24, light_col, cast_shadow=False)
 
-        # Dedicated soft golden hero light right above the Center Art Deco Mirror illuminating Pak Doni's reflection!
-        _add_area_light("Accent_MirrorHero", (0.0, 3.45, 3.05), (42, 0, 0), 110.0, (1.0, 0.84, 0.52), 1.2, 0.6, light_col, 72.0)
+        # Dedicated soft golden hero light right above the Center Art Deco Mirror illuminating Pak Doni!
+        _add_area_light("Accent_MirrorHero", (0.0, 3.45, 3.05), (42, 0, 0), 110.0, (1.0, 0.84, 0.52), 1.2, 0.6, light_col, 72.0, cast_shadow=False)
 
         # Deep twilight violet-blue cool fill from rear lobby for gorgeous warm-vs-cool complementary lighting!
-        _add_area_light("Fill_TwilightBlue", (2.0, -4.4, 3.0), (76, 0, 20), 125.0, (0.34, 0.42, 0.98), 3.8, 2.6, light_col, 110.0)
+        _add_area_light("Fill_TwilightBlue", (2.0, -4.4, 3.0), (76, 0, 20), 125.0, (0.34, 0.42, 0.98), 3.8, 2.6, light_col, 110.0, cast_shadow=False)
 
         _set_material_emission(mats["sconce_glass"], (1.0, 0.76, 0.32, 1.0), 5.6)
         _set_material_emission(mats["window_sky"], (1.0, 0.48, 0.18, 1.0), 2.8)

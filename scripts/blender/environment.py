@@ -24,7 +24,7 @@ def _assign_mat(obj: bpy.types.Object, mat: bpy.types.Material) -> None:
         obj.data.materials.append(mat)
 
 
-def _add_bevel(obj: bpy.types.Object, width: float = 0.015, segments: int = 2) -> None:
+def _add_bevel(obj: bpy.types.Object, width: float = 0.015, segments: int = 1) -> None:
     mod = obj.modifiers.new(name="Bevel", type="BEVEL")
     mod.width = width
     mod.segments = segments
@@ -53,7 +53,7 @@ def _box(
     obj.rotation_euler = Euler(rot, "XYZ")
     _assign_mat(obj, mat)
     if bevel > 0.0:
-        _add_bevel(obj, width=bevel, segments=2)
+        _add_bevel(obj, width=bevel, segments=1)
     link_obj_exclusive(obj, col)
     return obj
 
@@ -354,19 +354,32 @@ def _build_art_deco_mirrors(
     wall_y: float,
     mats: Dict[str, bpy.types.Material],
     mirrors_col: bpy.types.Collection,
+    alcove_col: bpy.types.Collection,
 ) -> Dict[str, bpy.types.Object]:
-    """HERO STORY PROP #2: Grand Art Deco Framed Mirrors + EEVEE Planar Reflection Probe!"""
+    """HERO STORY PROP #2: Grand Art Deco Framed Mirrors + Zero-Raytracing Optical Mirrored Alcove!"""
     # 1. CENTER PIER MIRROR (mounted right between the twin elevators, X = 0, Z = 1.66m!)
     mw, mh = 1.24, 2.18
     mz = 1.66
     my = wall_y - 0.14
 
-    # Stepped beveled gold Art Deco frame + crown crest
-    _box("MirrorCenter_FrameOuter", (mw + 0.24, 0.12, mh + 0.24), (0.0, my + 0.02, mz), mats["dark_bronze"], mirrors_col, bevel=0.015)
-    _box("MirrorCenter_FrameGold", (mw + 0.16, 0.15, mh + 0.16), (0.0, my, mz), mats["brass"], mirrors_col, bevel=0.015)
+    # Hollow stepped beveled gold Art Deco frame (4 perimeter rails so center opening can act as an optical portal!)
+    rail_w = 0.12
+    # Outer dark bronze perimeter rails
+    _box("MirrorCenter_OuterL", (rail_w, 0.12, mh + 0.24), (-(mw * 0.5 + rail_w * 0.5), my + 0.02, mz), mats["dark_bronze"], mirrors_col, bevel=0.012)
+    _box("MirrorCenter_OuterR", (rail_w, 0.12, mh + 0.24), ((mw * 0.5 + rail_w * 0.5), my + 0.02, mz), mats["dark_bronze"], mirrors_col, bevel=0.012)
+    _box("MirrorCenter_OuterT", (mw + 0.24, 0.12, rail_w), (0.0, my + 0.02, mz + mh * 0.5 + rail_w * 0.5), mats["dark_bronze"], mirrors_col, bevel=0.012)
+    _box("MirrorCenter_OuterB", (mw + 0.24, 0.12, rail_w), (0.0, my + 0.02, mz - mh * 0.5 - rail_w * 0.5), mats["dark_bronze"], mirrors_col, bevel=0.012)
+
+    # Inner gleaming brushed-brass stepped perimeter rails
+    gold_w = 0.085
+    _box("MirrorCenter_GoldL", (gold_w, 0.15, mh + 0.16), (-(mw * 0.5 + gold_w * 0.45), my, mz), mats["brass"], mirrors_col, bevel=0.010)
+    _box("MirrorCenter_GoldR", (gold_w, 0.15, mh + 0.16), ((mw * 0.5 + gold_w * 0.45), my, mz), mats["brass"], mirrors_col, bevel=0.010)
+    _box("MirrorCenter_GoldT", (mw + 0.16, 0.15, gold_w), (0.0, my, mz + mh * 0.5 + gold_w * 0.45), mats["brass"], mirrors_col, bevel=0.010)
+    _box("MirrorCenter_GoldB", (mw + 0.16, 0.15, gold_w), (0.0, my, mz - mh * 0.5 - gold_w * 0.45), mats["brass"], mirrors_col, bevel=0.010)
+
     # Art Deco stepped pediment crown above mirror
-    _box("MirrorCenter_Crown1", (0.76, 0.16, 0.16), (0.0, my, mz + mh * 0.5 + 0.14), mats["brass"], mirrors_col, bevel=0.012)
-    _box("MirrorCenter_Crown2", (0.42, 0.17, 0.15), (0.0, my - 0.01, mz + mh * 0.5 + 0.26), mats["brass"], mirrors_col, bevel=0.012)
+    _box("MirrorCenter_Crown1", (0.76, 0.16, 0.16), (0.0, my, mz + mh * 0.5 + 0.14), mats["brass"], mirrors_col, bevel=0.010)
+    _box("MirrorCenter_Crown2", (0.42, 0.17, 0.15), (0.0, my - 0.01, mz + mh * 0.5 + 0.26), mats["brass"], mirrors_col, bevel=0.010)
     # Corner geometric brass diamond studs
     for sx in (-1, 1):
         for sz in (-1, 1):
@@ -377,13 +390,34 @@ def _build_art_deco_mirrors(
                 mats["brass"],
                 mirrors_col,
                 rot=(0.0, math.radians(45.0), 0.0),
-                bevel=0.005,
+                bevel=0.004,
             )
 
-    # Mirror glass plane (facing -Y toward lobby!)
+    # Physical opaque reflective mirror glass (used in Cycles / raytraced mode & Scene 7 drop-in)
     mirror_plane = _box("MirrorCenter_Glass", (mw, 0.02, mh), (0.0, my - 0.065, mz), mats["mirror_glass"], mirrors_col, bevel=0.0)
 
-    # Real EEVEE Reflection Plane Light Probe aligned precisely to MirrorCenter_Glass!
+    # Crisp stylized 2.5D diagonal glass sheen accents tucked cleanly across upper-left mirror corner
+    # (both ends tuck neatly behind GoldL & GoldT rails — classic animated glass gleam with 0ms raytrace cost!)
+    sheen_a = _box(
+        "MirrorCenter_SheenA",
+        (0.055, 0.004, 0.72),
+        (-0.37, my - 0.062, 2.50),
+        mats["mirror_sheen"],
+        alcove_col,
+        rot=(0.0, math.radians(45.0), 0.0),
+        bevel=0.0,
+    )
+    sheen_b = _box(
+        "MirrorCenter_SheenB",
+        (0.022, 0.004, 0.96),
+        (-0.27, my - 0.062, 2.40),
+        mats["mirror_sheen"],
+        alcove_col,
+        rot=(0.0, math.radians(45.0), 0.0),
+        bevel=0.0,
+    )
+
+    # Real EEVEE Reflection Plane Light Probe aligned precisely to MirrorCenter_Glass
     probe_data = bpy.data.lightprobes.new("MirrorCenter_ProbeData", type="PLANE")
     if hasattr(probe_data, "influence_distance"):
         probe_data.influence_distance = 6.0
@@ -393,22 +427,76 @@ def _build_art_deco_mirrors(
         probe_data.clip_start = 0.02
     probe_obj = bpy.data.objects.new("MirrorCenter_ReflectionProbe", probe_data)
     probe_obj.location = (0.0, my - 0.08, mz)
-    # Default Plane probe normal is +Z; rotate +90° around X so normal points cleanly toward -Y (into lobby)!
     probe_obj.rotation_euler = (math.radians(90.0), 0.0, 0.0)
     probe_obj.scale = (mw * 0.65, mh * 0.65, 1.0)
     link_obj_exclusive(probe_obj, mirrors_col)
+
+    # ZERO-RAYTRACING OPTICAL MIRRORED ALCOVE strictly behind BackWall rear face (wall_y + 0.30 = 4.90m)!
+    # All walls/ceiling start at Y = 4.96m (> 4.90m) so NOTHING can ever poke through BackWall_Upper!
+    _box("MirrorAlcove_Floor", (6.2, 4.84, 0.14), (0.0, 7.18, -0.07), mats["floor_marble"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_CarpetGold", (3.12, 4.60, 0.016), (0.0, 7.26, 0.008), mats["carpet_gold"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_CarpetRed", (2.82, 4.60, 0.022), (0.0, 7.26, 0.011), mats["carpet_red"], alcove_col, bevel=0.0)
+    # Mirrored Lobby Rear Wall (rich deep emerald wainscoting + champagne upper plaster + brass cornice!)
+    _box("MirrorAlcove_BackLow", (6.4, 0.20, 3.45), (0.0, 9.55, 1.725), mats["emerald_wall"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_BackUpper", (6.4, 0.20, 2.85), (0.0, 9.55, 4.82), mats["warm_plaster"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_Cornice", (6.2, 0.18, 0.14), (0.0, 9.42, 3.45), mats["brass"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_Baseboard", (6.2, 0.14, 0.24), (0.0, 9.42, 0.12), mats["dark_bronze"], alcove_col, bevel=0.0)
+    # Side walls & ceiling strictly behind Y = 4.96m and outside elevator shafts (X = +/-3.15m)
+    _box("MirrorAlcove_LeftWall", (0.20, 4.64, 6.20), (-3.15, 7.28, 3.10), mats["emerald_wall"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_RightWall", (0.20, 4.64, 6.20), (3.15, 7.28, 3.10), mats["emerald_wall"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_Ceiling", (6.5, 4.64, 0.20), (0.0, 7.28, 6.10), mats["warm_plaster"], alcove_col, bevel=0.0)
+    # Mirrored Art Deco lobby arch doorway tucked to the left (leaves dark emerald right behind Pak Doni for high contrast!)
+    _box("MirrorAlcove_ArchRecess", (1.35, 0.12, 2.55), (-1.15, 9.42, 1.32), mats["warm_plaster"], alcove_col, bevel=0.0)
+    _box("MirrorAlcove_ArchFrameL", (0.14, 0.20, 2.68), (-1.86, 9.38, 1.36), mats["brass"], alcove_col, bevel=0.008)
+    _box("MirrorAlcove_ArchFrameR", (0.14, 0.20, 2.68), (-0.44, 9.38, 1.36), mats["brass"], alcove_col, bevel=0.008)
+    _box("MirrorAlcove_ArchTop", (1.56, 0.20, 0.16), (-1.15, 9.38, 2.68), mats["brass"], alcove_col, bevel=0.008)
+    # Mirrored Art Deco brass pilaster on right background for architectural depth
+    _box("MirrorAlcove_PilasterR", (0.18, 0.16, 4.2), (1.05, 9.40, 2.1), mats["brass"], alcove_col, bevel=0.008)
+    # Subtle golden dust motes continuing inside the mirror reflection!
+    for m_i, (mx, my_d, mz_d, mr) in enumerate((
+        (-0.28, 6.45, 2.38, 0.018),
+        (0.32, 7.10, 2.15, 0.015),
+        (-0.08, 7.80, 2.58, 0.020),
+        (0.45, 6.20, 1.72, 0.014),
+    )):
+        d_mesh = bpy.data.meshes.new(f"MirrorDust_{m_i}_Mesh")
+        d_bm = bmesh.new()
+        bmesh.ops.create_icosphere(d_bm, subdivisions=1, radius=mr)
+        d_bm.to_mesh(d_mesh)
+        d_bm.free()
+        d_obj = bpy.data.objects.new(f"MirrorAlcove_Dust_{m_i}", d_mesh)
+        d_obj.location = (mx, my_d, mz_d)
+        _assign_mat(d_obj, mats["dust_mote"])
+        link_obj_exclusive(d_obj, alcove_col)
+
+    # Balanced warm golden key light IN FRONT of the mirrored character (Y = 5.05m) so reflections look rich & sunlit!
+    ldata = bpy.data.lights.new("MirrorAlcove_LightData", type="POINT")
+    ldata.energy = 68.0
+    ldata.color = (1.0, 0.84, 0.56)
+    ldata.shadow_soft_size = 0.45
+    if hasattr(ldata, "use_shadow"):
+        ldata.use_shadow = False
+    lobj = bpy.data.objects.new("MirrorAlcove_Light", ldata)
+    lobj.location = (-0.15, 5.05, 2.25)
+    link_obj_exclusive(lobj, alcove_col)
 
     # 2. SIDE WALL GRAND MIRROR (on left wall between arched window & elevator corner, X = -4.78, Y = 2.55)
     smw, smh = 1.65, 2.25
     smz = 1.85
     smy = 2.55
     smx = -4.76
-    _box("MirrorSide_FrameOuter", (0.12, smw + 0.22, smh + 0.22), (smx - 0.02, smy, smz), mats["dark_bronze"], mirrors_col, bevel=0.014)
-    _box("MirrorSide_FrameGold", (0.15, smw + 0.14, smh + 0.14), (smx, smy, smz), mats["brass"], mirrors_col, bevel=0.014)
-    _box("MirrorSide_Crown", (0.16, 0.90, 0.22), (smx, smy, smz + smh * 0.5 + 0.16), mats["brass"], mirrors_col, bevel=0.012)
+    _box("MirrorSide_FrameOuter", (0.12, smw + 0.22, smh + 0.22), (smx - 0.02, smy, smz), mats["dark_bronze"], mirrors_col, bevel=0.012)
+    _box("MirrorSide_FrameGold", (0.15, smw + 0.14, smh + 0.14), (smx, smy, smz), mats["brass"], mirrors_col, bevel=0.012)
+    _box("MirrorSide_Crown", (0.16, 0.90, 0.22), (smx, smy, smz + smh * 0.5 + 0.16), mats["brass"], mirrors_col, bevel=0.010)
     _box("MirrorSide_Glass", (0.02, smw, smh), (smx + 0.065, smy, smz), mats["mirror_glass"], mirrors_col, bevel=0.0)
 
-    return {"mirror_center": mirror_plane, "mirror_probe": probe_obj}
+    return {
+        "mirror_center": mirror_plane,
+        "mirror_sheen_a": sheen_a,
+        "mirror_sheen_b": sheen_b,
+        "mirror_probe": probe_obj,
+        "mirror_plane_y": my - 0.055,
+    }
 
 
 def _build_sconce(
@@ -630,6 +718,7 @@ def build_art_deco_lobby(mats: Dict[str, bpy.types.Material]) -> Dict[str, objec
     """Assemble the complete Grand Art Deco Skyscraper Lobby 3D environment."""
     env_col = get_or_create_collection("Env_3D")
     mirrors_col = get_or_create_collection("Env_Mirrors", parent=env_col)
+    alcove_col = get_or_create_collection("Env_MirrorAlcove", parent=env_col)
     rocket_col = get_or_create_collection("Env_RocketCart", parent=env_col)
     dust_col = get_or_create_collection("FX_Dust")  # Deliberately outside Env_3D so Freestyle ignores motes!
 
@@ -645,9 +734,13 @@ def build_art_deco_lobby(mats: Dict[str, bpy.types.Material]) -> Dict[str, objec
     _box("Lobby_BrassThreshold", (4.6, 0.14, 0.014), (0.0, 3.85, 0.007), mats["brass"], env_col, bevel=0.003)
 
     # 2. BACK ELEVATOR WALL (Deep Emerald Lower Wall + Champagne Plaster Upper Wall + Fluted Brass Cornices)
-    # Left section, center pier, right section, and upper fascia so twin elevator openings stay truly recessed!
     _box("BackWall_Left", (2.4, 0.30, 3.45), (-3.95, wall_y + 0.15, 1.725), mats["emerald_wall"], env_col, bevel=0.01)
-    _box("BackWall_CenterPier", (1.98, 0.30, 3.45), (0.0, wall_y + 0.15, 1.725), mats["emerald_wall"], env_col, bevel=0.01)
+    # Center pier split into 4 perimeter strips + toggleable center plug (opens cleanly for Zero-Raytracing Mirror Portal!)
+    _box("BackWall_PierBot", (1.98, 0.30, 0.58), (0.0, wall_y + 0.15, 0.29), mats["emerald_wall"], env_col, bevel=0.008)
+    _box("BackWall_PierTop", (1.98, 0.30, 0.72), (0.0, wall_y + 0.15, 3.10), mats["emerald_wall"], env_col, bevel=0.008)
+    _box("BackWall_PierL", (0.38, 0.30, 2.22), (-0.80, wall_y + 0.15, 1.66), mats["emerald_wall"], env_col, bevel=0.008)
+    _box("BackWall_PierR", (0.38, 0.30, 2.22), (0.80, wall_y + 0.15, 1.66), mats["emerald_wall"], env_col, bevel=0.008)
+    center_plug = _box("BackWall_CenterPlug", (1.28, 0.30, 2.24), (0.0, wall_y + 0.15, 1.66), mats["emerald_wall"], env_col, bevel=0.006)
     _box("BackWall_Right", (2.4, 0.30, 3.45), (3.95, wall_y + 0.15, 1.725), mats["emerald_wall"], env_col, bevel=0.01)
     _box("BackWall_Upper", (10.4, 0.30, ceil_z - 3.35), (0.0, wall_y + 0.15, 3.35 + (ceil_z - 3.35) * 0.5), mats["warm_plaster"], env_col, bevel=0.01)
 
@@ -677,8 +770,9 @@ def build_art_deco_lobby(mats: Dict[str, bpy.types.Material]) -> Dict[str, objec
     # 4. HERO PROP #1: GIANT MECHANICAL ART DECO WALL CLOCK
     clock_handles = _build_hero_wall_clock(wall_y, mats, env_col)
 
-    # 5. HERO PROP #2: TOGGLEABLE GRAND ART DECO FRAMED MIRRORS + REAL REFLECTION PROBE
-    mirror_handles = _build_art_deco_mirrors(wall_y, mats, mirrors_col)
+    # 5. HERO PROP #2: TOGGLEABLE GRAND ART DECO FRAMED MIRRORS + ZERO-RAYTRACING OPTICAL ALCOVE
+    mirror_handles = _build_art_deco_mirrors(wall_y, mats, mirrors_col, alcove_col)
+    set_collection_visibility(alcove_col, False)
 
     # 6. LEFT WALL (X = -4.95) WITH TALL ARCHED ART DECO SKYSCRAPER WINDOWS!
     _box("LeftWall_Low", (0.28, 12.6, 1.15), (-5.05, -0.5, 0.575), mats["emerald_wall"], env_col, bevel=0.01)
@@ -753,6 +847,8 @@ def build_art_deco_lobby(mats: Dict[str, bpy.types.Material]) -> Dict[str, objec
     return {
         "env_col": env_col,
         "mirrors_col": mirrors_col,
+        "alcove_col": alcove_col,
+        "center_plug": center_plug,
         "rocket_col": rocket_col,
         "dust_col": dust_col,
         "elev_l": elev_l,
@@ -765,3 +861,14 @@ def build_art_deco_lobby(mats: Dict[str, bpy.types.Material]) -> Dict[str, objec
 def set_collection_visibility(col: bpy.types.Collection, visible: bool) -> None:
     col.hide_render = not visible
     col.hide_viewport = not visible
+
+
+def set_mirror_portal_mode(env: dict, portal_active: bool) -> None:
+    """Switch Center Mirror between Zero-Raytracing Optical Alcove (10x faster CI!) and solid mirror glass."""
+    set_collection_visibility(env["alcove_col"], portal_active)
+    plug = env["center_plug"]
+    plug.hide_render = portal_active
+    plug.hide_viewport = portal_active
+    glass = env["mirror_center"]
+    glass.hide_render = portal_active
+    glass.hide_viewport = portal_active
