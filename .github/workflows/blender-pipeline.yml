@@ -40,6 +40,7 @@ permissions:
 env:
   BLENDER_VERSION: "4.2.16"
   BLENDER_SERIES: "4.2"
+  BLENDER_DIR: "/tmp/blender-4.2.16-linux-x64"
 
 jobs:
   # ===========================================================================
@@ -105,8 +106,6 @@ jobs:
     needs: prepare
     if: ${{ inputs.mode == 'preview' }}
     runs-on: ubuntu-latest
-    env:
-      BLENDER_DIR: "${{ runner.temp }}/blender-4.2.16-linux-x64"
     steps:
       - uses: actions/checkout@v4
 
@@ -134,9 +133,9 @@ jobs:
         if: steps.cache-blender.outputs.cache-hit != 'true'
         run: |
           URL="https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
-          curl -fSL "$URL" -o "${{ runner.temp }}/blender.tar.xz"
-          tar -xf "${{ runner.temp }}/blender.tar.xz" -C "${{ runner.temp }}"
-          rm -f "${{ runner.temp }}/blender.tar.xz"
+          curl -fSL "$URL" -o "/tmp/blender.tar.xz"
+          tar -xf "/tmp/blender.tar.xz" -C "/tmp"
+          rm -f "/tmp/blender.tar.xz"
 
       - name: Render 4 High-Res 9:16 Environment Preview Screenshots
         env:
@@ -178,8 +177,6 @@ jobs:
       max-parallel: 10
       matrix:
         scene: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    env:
-      BLENDER_DIR: "${{ runner.temp }}/blender-4.2.16-linux-x64"
     steps:
       - uses: actions/checkout@v4
 
@@ -208,9 +205,9 @@ jobs:
         if: steps.cache-blender.outputs.cache-hit != 'true'
         run: |
           URL="https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
-          curl -fSL "$URL" -o "${{ runner.temp }}/blender.tar.xz"
-          tar -xf "${{ runner.temp }}/blender.tar.xz" -C "${{ runner.temp }}"
-          rm -f "${{ runner.temp }}/blender.tar.xz"
+          curl -fSL "$URL" -o "/tmp/blender.tar.xz"
+          tar -xf "/tmp/blender.tar.xz" -C "/tmp"
+          rm -f "/tmp/blender.tar.xz"
 
       - name: Render Scene ${{ matrix.scene }} (30 FPS, 9:16) & Encode Clip
         env:
