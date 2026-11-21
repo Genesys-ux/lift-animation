@@ -1,0 +1,869 @@
+{
+  "story": "Cermin Murah yang Mempercepat Lift Tanpa Menyentuh Mesinnya",
+  "canvas_px": [
+    960,
+    1120
+  ],
+  "floor_uv_y": 0.05714,
+  "center_uv_x": 0.5,
+  "pixels_per_meter": 496.0,
+  "characters": {
+    "raka": {
+      "name": "RAKA",
+      "role": "Psikolog Perilaku Santai",
+      "height_m": 1.82,
+      "default_expression": "chill",
+      "palette": [
+        {
+          "name": "Blazer Olive",
+          "hex": "#3E6E5F"
+        },
+        {
+          "name": "Syal Mustard",
+          "hex": "#E8A825"
+        },
+        {
+          "name": "Knit Krem",
+          "hex": "#F5EBD6"
+        },
+        {
+          "name": "Kacamata Emas",
+          "hex": "#E4B44B"
+        },
+        {
+          "name": "Rambut Espresso",
+          "hex": "#2E1E16"
+        }
+      ],
+      "props": "Gelas Kopi Kertas + Cermin Emas Art Deco",
+      "sprites": {
+        "chill": {
+          "svg": "assets/characters/raka/raka_chill.svg",
+          "png": "assets/characters/raka/raka_chill.png",
+          "label": "Santai"
+        },
+        "aha": {
+          "svg": "assets/characters/raka/raka_aha.svg",
+          "png": "assets/characters/raka/raka_aha.png",
+          "label": "Ide Aha!"
+        },
+        "smug": {
+          "svg": "assets/characters/raka/raka_smug.svg",
+          "png": "assets/characters/raka/raka_smug.png",
+          "label": "Tahu Rahasianya"
+        },
+        "thinking": {
+          "svg": "assets/characters/raka/raka_thinking.svg",
+          "png": "assets/characters/raka/raka_thinking.png",
+          "label": "Menganalisis"
+        },
+        "deadpan": {
+          "svg": "assets/characters/raka/raka_deadpan.svg",
+          "png": "assets/characters/raka/raka_deadpan.png",
+          "label": "Datar / Tenang"
+        },
+        "laugh": {
+          "svg": "assets/characters/raka/raka_laugh.svg",
+          "png": "assets/characters/raka/raka_laugh.png",
+          "label": "Tertawa Puas"
+        }
+      },
+      "sprites_noprops": {
+        "chill": {
+          "png": "assets/characters/raka/noprops/raka_chill.png",
+          "label": "Santai"
+        },
+        "aha": {
+          "png": "assets/characters/raka/noprops/raka_aha.png",
+          "label": "Ide Aha!"
+        },
+        "smug": {
+          "png": "assets/characters/raka/noprops/raka_smug.png",
+          "label": "Tahu Rahasianya"
+        },
+        "thinking": {
+          "png": "assets/characters/raka/noprops/raka_thinking.png",
+          "label": "Menganalisis"
+        },
+        "deadpan": {
+          "png": "assets/characters/raka/noprops/raka_deadpan.png",
+          "label": "Datar / Tenang"
+        },
+        "laugh": {
+          "png": "assets/characters/raka/noprops/raka_laugh.png",
+          "label": "Tertawa Puas"
+        }
+      },
+      "turnaround": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "svg": "assets/characters/raka/turnaround/raka_front.svg",
+          "png": "assets/characters/raka/turnaround/raka_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "svg": "assets/characters/raka/turnaround/raka_three_quarter.svg",
+          "png": "assets/characters/raka/turnaround/raka_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "svg": "assets/characters/raka/turnaround/raka_side.svg",
+          "png": "assets/characters/raka/turnaround/raka_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "svg": "assets/characters/raka/turnaround/raka_back_three_quarter.svg",
+          "png": "assets/characters/raka/turnaround/raka_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "svg": "assets/characters/raka/turnaround/raka_back.svg",
+          "png": "assets/characters/raka/turnaround/raka_back.png"
+        }
+      },
+      "turnaround_noprops": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "png": "assets/characters/raka/turnaround_noprops/raka_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "png": "assets/characters/raka/turnaround_noprops/raka_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "png": "assets/characters/raka/turnaround_noprops/raka_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "png": "assets/characters/raka/turnaround_noprops/raka_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "png": "assets/characters/raka/turnaround_noprops/raka_back.png"
+        }
+      },
+      "hand_anchors_m": {
+        "front": {
+          "coffee": [
+            -0.5,
+            -0.05,
+            0.8629
+          ],
+          "mirror": [
+            0.5,
+            -0.05,
+            0.9435
+          ]
+        },
+        "three_quarter": {
+          "coffee": [
+            -0.4435,
+            -0.08,
+            0.8468
+          ],
+          "mirror": [
+            0.4516,
+            0.08,
+            0.9516
+          ]
+        },
+        "side": {
+          "coffee": [
+            0.1048,
+            -0.09,
+            0.7339
+          ],
+          "mirror": [
+            0.4194,
+            0.08,
+            0.9113
+          ]
+        },
+        "back_three_quarter": {
+          "mirror": [
+            -0.4516,
+            -0.08,
+            0.9194
+          ],
+          "coffee": [
+            0.4355,
+            0.08,
+            0.8548
+          ]
+        },
+        "back": {
+          "mirror": [
+            -0.4839,
+            0.05,
+            0.9435
+          ],
+          "coffee": [
+            0.4839,
+            0.05,
+            0.8629
+          ]
+        }
+      }
+    },
+    "bima": {
+      "name": "PAK BIMA",
+      "role": "Manajer Gedung Panik",
+      "height_m": 1.74,
+      "default_expression": "panic",
+      "palette": [
+        {
+          "name": "Jas Navy Deco",
+          "hex": "#22375C"
+        },
+        {
+          "name": "Rompi Sampanye",
+          "hex": "#E0C489"
+        },
+        {
+          "name": "Dasi Merah",
+          "hex": "#D93829"
+        },
+        {
+          "name": "Kemeja Gading",
+          "hex": "#FAF7F0"
+        },
+        {
+          "name": "Pin Kuningan",
+          "hex": "#E8B73E"
+        }
+      ],
+      "props": "Clipboard 'Komplain 99%' + Pena Merah",
+      "sprites": {
+        "panic": {
+          "svg": "assets/characters/bima/bima_panic.svg",
+          "png": "assets/characters/bima/bima_panic.png",
+          "label": "Panik Total"
+        },
+        "stressed": {
+          "svg": "assets/characters/bima/bima_stressed.svg",
+          "png": "assets/characters/bima/bima_stressed.png",
+          "label": "Stres Berat"
+        },
+        "shocked": {
+          "svg": "assets/characters/bima/bima_shocked.svg",
+          "png": "assets/characters/bima/bima_shocked.png",
+          "label": "Kaget (O_O)"
+        },
+        "skeptical": {
+          "svg": "assets/characters/bima/bima_skeptical.svg",
+          "png": "assets/characters/bima/bima_skeptical.png",
+          "label": "Curiga / Ragu"
+        },
+        "relieved": {
+          "svg": "assets/characters/bima/bima_relieved.svg",
+          "png": "assets/characters/bima/bima_relieved.png",
+          "label": "Lega Sekali"
+        },
+        "proud": {
+          "svg": "assets/characters/bima/bima_proud.svg",
+          "png": "assets/characters/bima/bima_proud.png",
+          "label": "Bangga Pamer"
+        }
+      },
+      "sprites_noprops": {
+        "panic": {
+          "png": "assets/characters/bima/noprops/bima_panic.png",
+          "label": "Panik Total"
+        },
+        "stressed": {
+          "png": "assets/characters/bima/noprops/bima_stressed.png",
+          "label": "Stres Berat"
+        },
+        "shocked": {
+          "png": "assets/characters/bima/noprops/bima_shocked.png",
+          "label": "Kaget (O_O)"
+        },
+        "skeptical": {
+          "png": "assets/characters/bima/noprops/bima_skeptical.png",
+          "label": "Curiga / Ragu"
+        },
+        "relieved": {
+          "png": "assets/characters/bima/noprops/bima_relieved.png",
+          "label": "Lega Sekali"
+        },
+        "proud": {
+          "png": "assets/characters/bima/noprops/bima_proud.png",
+          "label": "Bangga Pamer"
+        }
+      },
+      "turnaround": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "svg": "assets/characters/bima/turnaround/bima_front.svg",
+          "png": "assets/characters/bima/turnaround/bima_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "svg": "assets/characters/bima/turnaround/bima_three_quarter.svg",
+          "png": "assets/characters/bima/turnaround/bima_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "svg": "assets/characters/bima/turnaround/bima_side.svg",
+          "png": "assets/characters/bima/turnaround/bima_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "svg": "assets/characters/bima/turnaround/bima_back_three_quarter.svg",
+          "png": "assets/characters/bima/turnaround/bima_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "svg": "assets/characters/bima/turnaround/bima_back.svg",
+          "png": "assets/characters/bima/turnaround/bima_back.png"
+        }
+      },
+      "turnaround_noprops": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "png": "assets/characters/bima/turnaround_noprops/bima_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "png": "assets/characters/bima/turnaround_noprops/bima_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "png": "assets/characters/bima/turnaround_noprops/bima_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "png": "assets/characters/bima/turnaround_noprops/bima_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "png": "assets/characters/bima/turnaround_noprops/bima_back.png"
+        }
+      },
+      "hand_anchors_m": {
+        "front": {
+          "clipboard": [
+            -0.5323,
+            -0.06,
+            0.8629
+          ],
+          "pen": [
+            0.5,
+            -0.06,
+            0.9113
+          ]
+        },
+        "three_quarter": {
+          "clipboard": [
+            -0.4839,
+            -0.08,
+            0.8468
+          ],
+          "pen": [
+            0.4516,
+            0.08,
+            0.8952
+          ]
+        },
+        "side": {
+          "clipboard": [
+            0.0968,
+            -0.09,
+            0.7097
+          ],
+          "pen": [
+            0.4355,
+            0.08,
+            0.9194
+          ]
+        },
+        "back_three_quarter": {
+          "pen": [
+            -0.4758,
+            -0.08,
+            0.8952
+          ],
+          "clipboard": [
+            0.4677,
+            0.08,
+            0.8629
+          ]
+        },
+        "back": {
+          "pen": [
+            -0.5,
+            0.06,
+            0.9032
+          ],
+          "clipboard": [
+            0.5161,
+            0.06,
+            0.8629
+          ]
+        }
+      }
+    },
+    "doni": {
+      "name": "PAK DONI",
+      "role": "Penghuni Pemarah -> Narsis",
+      "height_m": 1.58,
+      "default_expression": "furious",
+      "palette": [
+        {
+          "name": "Rompi Burgundy",
+          "hex": "#8E2436"
+        },
+        {
+          "name": "Kemeja Langit",
+          "hex": "#EAF2FA"
+        },
+        {
+          "name": "Koper Kulit",
+          "hex": "#8C4720"
+        },
+        {
+          "name": "Jam Emas",
+          "hex": "#F0BD38"
+        },
+        {
+          "name": "Jambul Hitam",
+          "hex": "#1E2230"
+        }
+      ],
+      "props": "Koper Kulit + Jam Tangan Emas + Sisir Saku",
+      "sprites": {
+        "furious": {
+          "svg": "assets/characters/doni/doni_furious.svg",
+          "png": "assets/characters/doni/doni_furious.png",
+          "label": "Murka / Protes"
+        },
+        "impatient": {
+          "svg": "assets/characters/doni/doni_impatient.svg",
+          "png": "assets/characters/doni/doni_impatient.png",
+          "label": "Bosan & Kesal"
+        },
+        "stunned": {
+          "svg": "assets/characters/doni/doni_stunned.svg",
+          "png": "assets/characters/doni/doni_stunned.png",
+          "label": "Tercengang (O_o)"
+        },
+        "narcissistic": {
+          "svg": "assets/characters/doni/doni_narcissistic.svg",
+          "png": "assets/characters/doni/doni_narcissistic.png",
+          "label": "Narsis Cermin"
+        },
+        "happy": {
+          "svg": "assets/characters/doni/doni_happy.svg",
+          "png": "assets/characters/doni/doni_happy.png",
+          "label": "Senang Polos"
+        },
+        "deadpan": {
+          "svg": "assets/characters/doni/doni_deadpan.svg",
+          "png": "assets/characters/doni/doni_deadpan.png",
+          "label": "Datar"
+        }
+      },
+      "sprites_noprops": {
+        "furious": {
+          "png": "assets/characters/doni/noprops/doni_furious.png",
+          "label": "Murka / Protes"
+        },
+        "impatient": {
+          "png": "assets/characters/doni/noprops/doni_impatient.png",
+          "label": "Bosan & Kesal"
+        },
+        "stunned": {
+          "png": "assets/characters/doni/noprops/doni_stunned.png",
+          "label": "Tercengang (O_o)"
+        },
+        "narcissistic": {
+          "png": "assets/characters/doni/noprops/doni_narcissistic.png",
+          "label": "Narsis Cermin"
+        },
+        "happy": {
+          "png": "assets/characters/doni/noprops/doni_happy.png",
+          "label": "Senang Polos"
+        },
+        "deadpan": {
+          "png": "assets/characters/doni/noprops/doni_deadpan.png",
+          "label": "Datar"
+        }
+      },
+      "turnaround": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "svg": "assets/characters/doni/turnaround/doni_front.svg",
+          "png": "assets/characters/doni/turnaround/doni_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "svg": "assets/characters/doni/turnaround/doni_three_quarter.svg",
+          "png": "assets/characters/doni/turnaround/doni_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "svg": "assets/characters/doni/turnaround/doni_side.svg",
+          "png": "assets/characters/doni/turnaround/doni_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "svg": "assets/characters/doni/turnaround/doni_back_three_quarter.svg",
+          "png": "assets/characters/doni/turnaround/doni_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "svg": "assets/characters/doni/turnaround/doni_back.svg",
+          "png": "assets/characters/doni/turnaround/doni_back.png"
+        }
+      },
+      "turnaround_noprops": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "png": "assets/characters/doni/turnaround_noprops/doni_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "png": "assets/characters/doni/turnaround_noprops/doni_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "png": "assets/characters/doni/turnaround_noprops/doni_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "png": "assets/characters/doni/turnaround_noprops/doni_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "png": "assets/characters/doni/turnaround_noprops/doni_back.png"
+        }
+      },
+      "hand_anchors_m": {
+        "front": {
+          "comb": [
+            -0.5,
+            -0.06,
+            0.8306
+          ],
+          "watch": [
+            -0.4516,
+            -0.07,
+            0.7581
+          ],
+          "briefcase": [
+            0.4597,
+            -0.05,
+            0.5
+          ]
+        },
+        "three_quarter": {
+          "comb": [
+            -0.4597,
+            -0.08,
+            0.8306
+          ],
+          "watch": [
+            -0.4113,
+            -0.09,
+            0.7581
+          ],
+          "briefcase": [
+            0.4194,
+            0.07,
+            0.5
+          ]
+        },
+        "side": {
+          "comb": [
+            0.3871,
+            0.08,
+            0.8306
+          ],
+          "watch": [
+            0.3387,
+            0.08,
+            0.7661
+          ],
+          "briefcase": [
+            -0.0565,
+            -0.09,
+            0.4758
+          ]
+        },
+        "back_three_quarter": {
+          "briefcase": [
+            -0.4274,
+            -0.08,
+            0.5
+          ],
+          "comb": [
+            0.4516,
+            0.08,
+            0.8226
+          ],
+          "watch": [
+            0.4032,
+            0.08,
+            0.7581
+          ]
+        },
+        "back": {
+          "briefcase": [
+            -0.4516,
+            0.06,
+            0.5
+          ],
+          "comb": [
+            0.4839,
+            0.06,
+            0.8226
+          ],
+          "watch": [
+            0.4355,
+            0.06,
+            0.7581
+          ]
+        }
+      }
+    },
+    "clara": {
+      "name": "CLARA",
+      "role": "Insinyur Lift Over-Engineered",
+      "height_m": 1.66,
+      "default_expression": "excited",
+      "palette": [
+        {
+          "name": "Helm Kuning",
+          "hex": "#F2B724"
+        },
+        {
+          "name": "Overall Denim",
+          "hex": "#2D4F7E"
+        },
+        {
+          "name": "Kemeja Oranye",
+          "hex": "#DE642B"
+        },
+        {
+          "name": "Goggles Cyan",
+          "hex": "#44C4D8"
+        },
+        {
+          "name": "Blueprint Biru",
+          "hex": "#2378C4"
+        }
+      ],
+      "props": "Blueprint 'Lift Roket Turbo' + Kunci Inggris Baja",
+      "sprites": {
+        "excited": {
+          "svg": "assets/characters/clara/clara_excited.svg",
+          "png": "assets/characters/clara/clara_excited.png",
+          "label": "Antusias Roket!"
+        },
+        "determined": {
+          "svg": "assets/characters/clara/clara_determined.svg",
+          "png": "assets/characters/clara/clara_determined.png",
+          "label": "Fokus Insinyur"
+        },
+        "confused": {
+          "svg": "assets/characters/clara/clara_confused.svg",
+          "png": "assets/characters/clara/clara_confused.png",
+          "label": "Bingung (o_O)"
+        },
+        "shocked": {
+          "svg": "assets/characters/clara/clara_shocked.svg",
+          "png": "assets/characters/clara/clara_shocked.png",
+          "label": "Syok Berat"
+        },
+        "deadpan": {
+          "svg": "assets/characters/clara/clara_deadpan.svg",
+          "png": "assets/characters/clara/clara_deadpan.png",
+          "label": "Kecewa Datar"
+        },
+        "laugh": {
+          "svg": "assets/characters/clara/clara_laugh.svg",
+          "png": "assets/characters/clara/clara_laugh.png",
+          "label": "Tawa Lepas"
+        }
+      },
+      "sprites_noprops": {
+        "excited": {
+          "png": "assets/characters/clara/noprops/clara_excited.png",
+          "label": "Antusias Roket!"
+        },
+        "determined": {
+          "png": "assets/characters/clara/noprops/clara_determined.png",
+          "label": "Fokus Insinyur"
+        },
+        "confused": {
+          "png": "assets/characters/clara/noprops/clara_confused.png",
+          "label": "Bingung (o_O)"
+        },
+        "shocked": {
+          "png": "assets/characters/clara/noprops/clara_shocked.png",
+          "label": "Syok Berat"
+        },
+        "deadpan": {
+          "png": "assets/characters/clara/noprops/clara_deadpan.png",
+          "label": "Kecewa Datar"
+        },
+        "laugh": {
+          "png": "assets/characters/clara/noprops/clara_laugh.png",
+          "label": "Tawa Lepas"
+        }
+      },
+      "turnaround": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "svg": "assets/characters/clara/turnaround/clara_front.svg",
+          "png": "assets/characters/clara/turnaround/clara_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "svg": "assets/characters/clara/turnaround/clara_three_quarter.svg",
+          "png": "assets/characters/clara/turnaround/clara_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "svg": "assets/characters/clara/turnaround/clara_side.svg",
+          "png": "assets/characters/clara/turnaround/clara_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "svg": "assets/characters/clara/turnaround/clara_back_three_quarter.svg",
+          "png": "assets/characters/clara/turnaround/clara_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "svg": "assets/characters/clara/turnaround/clara_back.svg",
+          "png": "assets/characters/clara/turnaround/clara_back.png"
+        }
+      },
+      "turnaround_noprops": {
+        "front": {
+          "yaw_deg": 0,
+          "label": "0° Depan (Front)",
+          "png": "assets/characters/clara/turnaround_noprops/clara_front.png"
+        },
+        "three_quarter": {
+          "yaw_deg": 45,
+          "label": "45° Tiga Perempat (3/4)",
+          "png": "assets/characters/clara/turnaround_noprops/clara_three_quarter.png"
+        },
+        "side": {
+          "yaw_deg": 90,
+          "label": "90° Samping (Side Profile)",
+          "png": "assets/characters/clara/turnaround_noprops/clara_side.png"
+        },
+        "back_three_quarter": {
+          "yaw_deg": 135,
+          "label": "135° Belakang 3/4",
+          "png": "assets/characters/clara/turnaround_noprops/clara_back_three_quarter.png"
+        },
+        "back": {
+          "yaw_deg": 180,
+          "label": "180° Belakang (Back)",
+          "png": "assets/characters/clara/turnaround_noprops/clara_back.png"
+        }
+      },
+      "hand_anchors_m": {
+        "front": {
+          "blueprint": [
+            -0.4839,
+            -0.06,
+            0.8629
+          ],
+          "wrench": [
+            0.4839,
+            -0.06,
+            0.8306
+          ]
+        },
+        "three_quarter": {
+          "blueprint": [
+            -0.4435,
+            -0.08,
+            0.8548
+          ],
+          "wrench": [
+            0.4355,
+            0.08,
+            0.8306
+          ]
+        },
+        "side": {
+          "blueprint": [
+            0.1048,
+            -0.09,
+            0.6532
+          ],
+          "wrench": [
+            0.4032,
+            0.08,
+            0.8387
+          ]
+        },
+        "back_three_quarter": {
+          "wrench": [
+            -0.4435,
+            -0.08,
+            0.8306
+          ],
+          "blueprint": [
+            0.4355,
+            0.08,
+            0.8629
+          ]
+        },
+        "back": {
+          "wrench": [
+            -0.4758,
+            0.06,
+            0.8306
+          ],
+          "blueprint": [
+            0.4758,
+            0.06,
+            0.8629
+          ]
+        }
+      }
+    }
+  }
+}

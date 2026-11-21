@@ -1,0 +1,297 @@
+name: Blender 2.5D Animation Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Pipeline mode to run"
+        required: true
+        default: "final"
+        type: choice
+        options:
+          - final
+          - preview
+          - characters
+      quality:
+        description: "Render quality preset (production = 1080x1920 16spp, draft_fast = 720x1280 8spp)"
+        required: false
+        default: "production"
+        type: choice
+        options:
+          - production
+          - draft_fast
+      engine:
+        description: "Blender render engine (eevee recommended for fast parallel CI)"
+        required: false
+        default: "eevee"
+        type: choice
+        options:
+          - eevee
+          - cycles
+      commit_previews:
+        description: "Commit rendered PNGs back to /previews/ (preview/characters mode)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  BLENDER_VERSION: "4.2.16"
+  BLENDER_SERIES: "4.2"
+
+jobs:
+  # ===========================================================================
+  # STAGE 1: Generate 2.5D Character Sprites + Audio Narration, SFX, BGM & ASS
+  # ===========================================================================
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python & audio dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate 2.5D Character Sprites, Turnarounds & Sheets
+        run: |
+          python scripts/characters/generate_characters.py
+
+      - name: Generate Voiceover (edge-tts), Foley SFX, Art Deco BGM & ASS Subtitles
+        if: ${{ inputs.mode == 'final' }}
+        run: |
+          python scripts/audio/generate_audio.py
+
+      - name: Upload Prepared Sprites & Audio Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-prepared-assets
+          path: |
+            assets/characters/
+            output/audio/
+            previews/characters_*.png
+          retention-days: 3
+
+      - name: Upload Character Sheets Artifact (characters mode)
+        if: ${{ inputs.mode == 'characters' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: blender-previews-characters
+          path: previews/characters_*.png
+
+      - name: Optionally commit Character Sheets
+        if: ${{ inputs.mode == 'characters' && inputs.commit_previews == true }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add previews/characters_*.png
+          git diff --cached --quiet || git commit -m "chore(previews): update character sheets"
+          git push
+
+  # ===========================================================================
+  # STAGE 2A: Gate 3 Multi-Angle 9:16 Environment Previews (mode == preview)
+  # ===========================================================================
+  render-preview:
+    needs: prepare
+    if: ${{ inputs.mode == 'preview' }}
+    runs-on: ubuntu-latest
+    env:
+      BLENDER_DIR: "${{ runner.temp }}/blender-4.2.16-linux-x64"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pipeline-prepared-assets
+          path: .
+
+      - name: Install headless OpenGL (Xvfb + Mesa)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb libgl1 libglx-mesa0 libgl1-mesa-dri libegl1 libxi6 \
+            libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6 \
+            libglu1-mesa xz-utils
+
+      - name: Cache Blender ${{ env.BLENDER_VERSION }} LTS
+        id: cache-blender
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BLENDER_DIR }}
+          key: blender-linux-${{ env.BLENDER_VERSION }}
+
+      - name: Download & extract Blender ${{ env.BLENDER_VERSION }} LTS
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          URL="https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+          curl -fSL "$URL" -o "${{ runner.temp }}/blender.tar.xz"
+          tar -xf "${{ runner.temp }}/blender.tar.xz" -C "${{ runner.temp }}"
+          rm -f "${{ runner.temp }}/blender.tar.xz"
+
+      - name: Render 4 High-Res 9:16 Environment Preview Screenshots
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          GALLIUM_DRIVER: "llvmpipe"
+          MESA_GL_VERSION_OVERRIDE: "4.5"
+        run: |
+          SAMPLES="24"
+          if [ "${{ inputs.quality }}" = "draft_fast" ]; then SAMPLES="12"; fi
+          xvfb-run -a -s "-screen 0 1280x1024x24" \
+            "${{ env.BLENDER_DIR }}/blender" -b --python-exit-code 1 \
+            --python scripts/render_preview.py -- \
+            --width 1080 --height 1920 --samples "$SAMPLES" --engine "${{ inputs.engine }}"
+
+      - name: Upload Gate 3 Preview Screenshots Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blender-previews-env
+          path: previews/*.png
+
+      - name: Optionally commit PNG previews to /previews/
+        if: ${{ inputs.commit_previews == true }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add previews/*.png
+          git diff --cached --quiet || git commit -m "chore(previews): render Blender environment previews"
+          git push
+
+  # ===========================================================================
+  # STAGE 2B: 10-Way Parallel Cloud Scene Rendering Matrix (mode == final)
+  # ===========================================================================
+  render-scene:
+    needs: prepare
+    if: ${{ inputs.mode == 'final' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        scene: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    env:
+      BLENDER_DIR: "${{ runner.temp }}/blender-4.2.16-linux-x64"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Prepared Sprites & Timing Manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-prepared-assets
+          path: .
+
+      - name: Install headless OpenGL (Xvfb + Mesa) & FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb libgl1 libglx-mesa0 libgl1-mesa-dri libegl1 libxi6 \
+            libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6 \
+            libglu1-mesa ffmpeg xz-utils
+
+      - name: Cache Blender ${{ env.BLENDER_VERSION }} LTS
+        id: cache-blender
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BLENDER_DIR }}
+          key: blender-linux-${{ env.BLENDER_VERSION }}
+
+      - name: Download & extract Blender ${{ env.BLENDER_VERSION }} LTS
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          URL="https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+          curl -fSL "$URL" -o "${{ runner.temp }}/blender.tar.xz"
+          tar -xf "${{ runner.temp }}/blender.tar.xz" -C "${{ runner.temp }}"
+          rm -f "${{ runner.temp }}/blender.tar.xz"
+
+      - name: Render Scene ${{ matrix.scene }} (30 FPS, 9:16) & Encode Clip
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          GALLIUM_DRIVER: "llvmpipe"
+          MESA_GL_VERSION_OVERRIDE: "4.5"
+        run: |
+          if [ "${{ inputs.quality }}" = "draft_fast" ]; then
+            W=720; H=1280; SAMPLES=8
+          else
+            W=1080; H=1920; SAMPLES=16
+          fi
+          xvfb-run -a -s "-screen 0 1280x1024x24" \
+            "${{ env.BLENDER_DIR }}/blender" -b --python-exit-code 1 \
+            --python scripts/render_final.py -- \
+            --scene "${{ matrix.scene }}" \
+            --width "$W" --height "$H" \
+            --samples "$SAMPLES" \
+            --engine "${{ inputs.engine }}" \
+            --encode-clip
+
+      - name: Upload Rendered Scene ${{ matrix.scene }} Clip
+        uses: actions/upload-artifact@v4
+        with:
+          name: scene-clip-${{ matrix.scene }}
+          path: output/clips/scene_*.mp4
+          retention-days: 3
+
+  # ===========================================================================
+  # STAGE 3: Final FFmpeg Composition (Concat + Master Audio + Burn-In Subtitles)
+  # ===========================================================================
+  compose-final:
+    needs: [prepare, render-scene]
+    if: ${{ inputs.mode == 'final' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install FFmpeg & DejaVu Fonts (for bold ASS subtitles)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core
+
+      - name: Download Prepared Audio & Subtitles
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-prepared-assets
+          path: .
+
+      - name: Download All 10 Rendered Scene Clips
+        uses: actions/download-artifact@v4
+        with:
+          pattern: scene-clip-*
+          merge-multiple: true
+          path: output/clips
+
+      - name: Compose Final 9:16 YouTube Short MP4
+        run: |
+          ls -la output/clips
+          python scripts/compose.py
+
+      - name: Inspect Final MP4 & Write Summary
+        run: |
+          ffprobe -v error -show_format -show_streams output/output_short_9x16.mp4 | head -n 40
+          {
+            echo "## 🎬 YouTube Short 9:16 Final Render Ready!"
+            echo "- **File:** \`output/output_short_9x16.mp4\`"
+            echo "- **Resolution:** 1080×1920 @ 30 FPS (H.264 + AAC 192k + Burned-in Bold Subtitles)"
+            echo "- **Engine:** \`${{ inputs.engine }}\` (\`${{ inputs.quality }}\`)"
+            echo "- Download from the **Artifacts** panel below (\`youtube-short-9x16-final\`)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Final Short MP4 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-short-9x16-final
+          path: output/output_short_9x16.mp4
+          if-no-files-found: error
+          retention-days: 30
